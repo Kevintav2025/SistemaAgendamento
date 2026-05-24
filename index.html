@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Barbearia | Agendamento</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  body {
+    background: #111827;
+    color: #e5e7eb;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #808080;
+    margin-bottom: 20px;
+  }
+
+  .app {
+    max-width: 900px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .card {
+    background: #020617;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .card h2 {
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    color: #22c55e;
+  }
+
+  label {
+    font-size: 0.85rem;
+    margin-top: 10px;
+    display: block;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: none;
+    background: #0f172a;
+    color: #fff;
+  }
+
+  .servicos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .servico {
+    background: #0f172a;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+
+  .servico input {
+    display: none;
+  }
+
+  .servico.ativo {
+    border-color: #22c55e;
+  }
+
+  .servico span {
+    display: block;
+    font-size: 0.85rem;
+  }
+
+  .total {
+    margin-top: 15px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #22c55e;
+  }
+
+  button {
+    width: 100%;
+    padding: 11px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 15px;
+    background: #808080;
+    color: #020617;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #16a34a;
+  }
+
+  .agenda .item {
+    background: #0f172a;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 4px solid #22c55e;
+  }
+
+  .agenda span {
+    display: block;
+    font-size: 0.85rem;
+  }
+
+  .cancelar {
+    background: #ef4444;
+    color: #fff;
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+  }
+
+  .cancelar:hover {
+    background: #dc2626;
+  }
+
+  @media (max-width: 768px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<h1>💈 Sistema de Agendamento</h1>
+
+<div class="app">
+
+  <!-- FORMULÁRIO -->
+  <div class="card">
+    <h2>Novo Agendamento</h2>
+
+    <label>Cliente</label>
+    <input type="text" id="cliente">
+
+    <label>Serviços</label>
+    <div class="servicos">
+      <div class="servico" onclick="toggle(this, 30, 'Corte')">
+        <input type="checkbox">
+        <span>Corte</span>
+        <span>R$ 30</span>
+      </div>
+
+      <div class="servico" onclick="toggle(this, 25, 'Barba')">
+        <input type="checkbox">
+        <span>Barba</span>
+        <span>R$ 25</span>
+      </div>
+
+      <div class="servico" onclick="toggle(this, 15, 'Sobrancelha')">
+        <input type="checkbox">
+        <span>Sobrancelha</span>
+        <span>R$ 15</span>
+      </div>
+
+      <div class="servico" onclick="toggle(this, 40, 'Corte + Barba')">
+        <input type="checkbox">
+        <span>Corte + Barba</span>
+        <span>R$ 40</span>
+      </div>
+    </div>
+
+    <label>Data</label>
+    <input type="date" id="data">
+
+    <label>Horário</label>
+    <input type="time" id="hora">
+
+    <div class="total">Total: R$ <span id="total">0</span></div>
+
+    <button onclick="agendar()">Confirmar Agendamento</button>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="card agenda">
+    <h2>Agenda</h2>
+    <div id="lista"></div>
+  </div>
+
+</div>
+
+<script>
+  let total = 0;
+  let servicosSelecionados = [];
+  let agendamentos = JSON.parse(localStorage.getItem("agenda")) || [];
+
+  function toggle(el, valor, nome) {
+    el.classList.toggle("ativo");
+
+    if (el.classList.contains("ativo")) {
+      total += valor;
+      servicosSelecionados.push(nome);
+    } else {
+      total -= valor;
+      servicosSelecionados = servicosSelecionados.filter(s => s !== nome);
+    }
+
+    document.getElementById("total").innerText = total;
+  }
+
+  function agendar() {
+    const cliente = document.getElementById("cliente").value;
+    const data = document.getElementById("data").value;
+    const hora = document.getElementById("hora").value;
+
+    if (!cliente || !data || !hora || servicosSelecionados.length === 0) {
+      alert("Preencha todos os campos");
+      return;
+    }
+
+    const ocupado = agendamentos.some(a => a.data === data && a.hora === hora);
+    if (ocupado) {
+      alert("Horário já ocupado");
+      return;
+    }
+
+    agendamentos.push({
+      cliente,
+      servicos: [...servicosSelecionados],
+      total,
+      data,
+      hora
+    });
+
+    salvar();
+    limpar();
+    mostrar();
+  }
+
+  function mostrar() {
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    agendamentos.forEach((a, i) => {
+      lista.innerHTML += `
+        <div class="item">
+          <span><b>${a.cliente}</b></span>
+          <span>${a.servicos.join(", ")}</span>
+          <span>Total: R$ ${a.total}</span>
+          <span>${a.data} às ${a.hora}</span>
+          <button class="cancelar" onclick="cancelar(${i})">Cancelar</button>
+        </div>
+      `;
+    });
+  }
+
+  function cancelar(i) {
+    if (confirm("Cancelar agendamento?")) {
+      agendamentos.splice(i, 1);
+      salvar();
+      mostrar();
+    }
+  }
+
+  function salvar() {
+    localStorage.setItem("agenda", JSON.stringify(agendamentos));
+  }
+
+  function limpar() {
+    document.getElementById("cliente").value = "";
+    document.getElementById("data").value = "";
+    document.getElementById("hora").value = "";
+    document.getElementById("total").innerText = "0";
+    total = 0;
+    servicosSelecionados = [];
+    document.querySelectorAll(".servico").forEach(s => s.classList.remove("ativo"));
+  }
+
+  mostrar();
+</script>
+
+</body>
+</html>
